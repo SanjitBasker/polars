@@ -210,6 +210,22 @@ def test_join_lazy_frame_on_expression() -> None:
     assert lazy_join.shape == eager_join.shape
 
 
+def test_followup_to_above() -> None:
+    df = pl.DataFrame(data={"a": [0, 1], "b": [2, 3]})
+    eager_join = df.join(
+        df, left_on=pl.coalesce("b", "a"), right_on=pl.col("a") % 200
+    ).select("a")
+
+    lazy_join = (
+        df.lazy()
+        .join(df.lazy(), left_on=pl.coalesce("b", "a"), right_on=pl.col("a") % 200)
+        .select("a")
+        .collect()
+    )
+
+    assert lazy_join.shape == eager_join.shape
+
+
 def test_join() -> None:
     df_left = pl.DataFrame(
         {
